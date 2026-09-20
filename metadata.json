@@ -1,0 +1,6 @@
+{
+  "name": "Nosso Jardim ao Entardecer",
+  "description": "Uma experiência romântica, cinematográfica e emocional para um casal, com identidade visual de lírios-aranha e girassóis, timeline interativa, galeria, cartas, contador e painel administrativo completo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

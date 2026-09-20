@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --bg-deep: #090708;
+  --bg-night: #12090D;
+  --wine: #3A0D18;
+  --burgundy: #641329;
+  --red: #A9162F;
+  --red-bright: #D92E45;
+  --sunflower: #DFAE27;
+  --gold: #F0C95A;
+  --cream: #F6EBDD;
+  --muted: #B9A8A0;
+  --green-dark: #17251B;
+
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-script: 'Alex Brush', cursive;
+}
+
+@theme {
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-script: 'Alex Brush', cursive;
+  
+  --color-bg-deep: #090708;
+  --color-bg-night: #12090D;
+  --color-wine: #3A0D18;
+  --color-burgundy: #641329;
+  --color-red: #A9162F;
+  --color-red-bright: #D92E45;
+  --color-sunflower: #DFAE27;
+  --color-gold: #F0C95A;
+  --color-cream: #F6EBDD;
+  --color-muted: #B9A8A0;
+  --color-green-dark: #17251B;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-deep);
+  color: var(--cream);
+  min-height: 100vh;
+}
+
+h1, h2, h3, .font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-script {
+  font-family: var(--font-script);
+}
+
+/* Custom delicate scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090708;
+}
+::-webkit-scrollbar-thumb {
+  background: #3A0D18;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #641329;
+}
+
+/* Atmospheric glow and subtle effects */
+.bokeh-layer {
+  background: radial-gradient(circle at 50% 30%, rgba(169, 22, 47, 0.12) 0%, transparent 60%),
+              radial-gradient(circle at 80% 70%, rgba(223, 174, 39, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(100, 19, 41, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.golden-hour-glow {
+  background: radial-gradient(ellipse at bottom center, rgba(240, 201, 90, 0.15) 0%, rgba(169, 22, 47, 0.08) 40%, transparent 75%);
+}
+
+.subtle-grain {
+  background-image: radial-gradient(rgba(246, 235, 221, 0.02) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Paper letter texture */
+.parchment-texture {
+  background-color: #170d12;
+  background-image: 
+    radial-gradient(#2d111b 1px, transparent 1px),
+    linear-gradient(135deg, rgba(240, 201, 90, 0.03) 0%, rgba(169, 22, 47, 0.03) 100%);
+  background-size: 20px 20px, 100% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

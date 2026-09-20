@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import { PublicSiteData, SiteSettings, TimelineItem, GalleryItem, LoveNote, Letter, SecretLetter, MusicTrack, FutureItem, EasterEgg, MediaFile } from '../src/types.js';
+import pg from 'pg';
+import type { PublicSiteData, SiteSettings, TimelineItem, GalleryItem, LoveNote, Letter, SecretLetter, MusicTrack, FutureItem, EasterEgg, MediaFile } from '../src/types.js';
 
 export interface DatabaseSchema {
   admin: {
@@ -359,10 +361,15 @@ const defaultEasterEggs: EasterEgg[] = [
 
 class Database {
   private data: DatabaseSchema;
+  private pool: pg.Pool | null = null;
+  private supabaseConnected = false;
+  private lastSyncTime: string | null = null;
+  private syncError: string | null = null;
 
   constructor() {
     this.ensureDataDirectory();
-    this.data = this.loadData();
+    this.data = this.loadLocalData();
+    this.initPostgres();
   }
 
   private ensureDataDirectory() {
@@ -371,13 +378,52 @@ class Database {
     }
   }
 
-  private loadData(): DatabaseSchema {
+  private initPostgres() {
+    let pgUrl = process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || '';
+    if (!pgUrl && process.env.POSTGRES_HOST && process.env.POSTGRES_PASSWORD) {
+      pgUrl = `postgres://${process.env.POSTGRES_USER || 'postgres'}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT || 5432}/${process.env.POSTGRES_DATABASE || 'postgres'}`;
+    }
+
+    if (!pgUrl) {
+      console.log('[Supabase PG] Nenhuma URL de conexão PostgreSQL configurada. Usando armazenamento local.');
+      return;
+    }
+
+    // Strip URL parameters like ?sslmode=require which force strict CA checks on self-signed certs
+    const cleanUrl = pgUrl.split('?')[0];
+
+    try {
+      this.pool = new pg.Pool({
+        connectionString: cleanUrl,
+        ssl: { rejectUnauthorized: false },
+        max: 5,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000
+      });
+
+      this.pool.on('error', (err) => {
+        console.error('[Supabase PG Pool Error]:', err.message);
+        this.supabaseConnected = false;
+        this.syncError = err.message;
+      });
+
+      // Background initialization
+      this.syncFromSupabase().catch((err) => {
+        console.error('[Supabase PG Init Error]:', err.message);
+      });
+    } catch (err: any) {
+      console.error('[Supabase PG Setup Error]:', err.message);
+      this.syncError = err.message;
+    }
+  }
+
+  private loadLocalData(): DatabaseSchema {
     if (fs.existsSync(DB_FILE)) {
       try {
         const content = fs.readFileSync(DB_FILE, 'utf-8');
         return JSON.parse(content);
       } catch (err) {
-        console.error("Error reading database file, using defaults:", err);
+        console.error("Error reading local database file, using defaults:", err);
       }
     }
 
@@ -412,19 +458,155 @@ class Database {
       ]
     };
 
-    this.saveData(initialData);
+    this.saveLocalCache(initialData);
     return initialData;
+  }
+
+  private saveLocalCache(data: DatabaseSchema) {
+    try {
+      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (err) {
+      console.error("Failed to write to local database file:", err);
+    }
+  }
+
+  public async syncFromSupabase(): Promise<boolean> {
+    if (!this.pool) return false;
+    try {
+      const client = await this.pool.connect();
+      try {
+        // Ensure table exists
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS jardim_state (
+            key VARCHAR(64) PRIMARY KEY,
+            data JSONB NOT NULL,
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+          );
+        `);
+
+        // Check if state exists
+        const res = await client.query('SELECT data, updated_at FROM jardim_state WHERE key = $1', ['site_data']);
+        if (res.rows.length > 0 && res.rows[0].data) {
+          const cloudData = res.rows[0].data as DatabaseSchema;
+          this.data = {
+            ...this.data,
+            ...cloudData,
+            admin: cloudData.admin || this.data.admin
+          };
+          this.saveLocalCache(this.data);
+          this.supabaseConnected = true;
+          this.lastSyncTime = new Date().toISOString();
+          this.syncError = null;
+          console.log('[Supabase PG] Dados carregados do Supabase PostgreSQL com sucesso!');
+          return true;
+        } else {
+          // Upload initial state to Supabase
+          console.log('[Supabase PG] Nenhum dado prévio encontrado. Enviando estado inicial para o Supabase...');
+          await this.syncToSupabase();
+          this.supabaseConnected = true;
+          this.lastSyncTime = new Date().toISOString();
+          this.syncError = null;
+          return true;
+        }
+      } finally {
+        client.release();
+      }
+    } catch (err: any) {
+      this.supabaseConnected = false;
+      this.syncError = err.message;
+      console.error('[Supabase PG Sync From Failed]:', err.message);
+      return false;
+    }
+  }
+
+  public async syncToSupabase(): Promise<boolean> {
+    if (!this.pool) return false;
+    try {
+      const client = await this.pool.connect();
+      try {
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS jardim_state (
+            key VARCHAR(64) PRIMARY KEY,
+            data JSONB NOT NULL,
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+          );
+        `);
+
+        await client.query(
+          `INSERT INTO jardim_state (key, data, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (key) DO UPDATE SET data = $2, updated_at = NOW()`,
+          ['site_data', JSON.stringify(this.data)]
+        );
+
+        // Also sync settings row to relational table
+        try {
+          await client.query(
+            `INSERT INTO jardim_settings (id, couple_names, site_title, meta_description, hero_title, hero_subtitle, counter_start_date, counter_enabled, data, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+             ON CONFLICT (id) DO UPDATE SET
+               couple_names = EXCLUDED.couple_names,
+               site_title = EXCLUDED.site_title,
+               meta_description = EXCLUDED.meta_description,
+               hero_title = EXCLUDED.hero_title,
+               hero_subtitle = EXCLUDED.hero_subtitle,
+               counter_start_date = EXCLUDED.counter_start_date,
+               counter_enabled = EXCLUDED.counter_enabled,
+               data = EXCLUDED.data,
+               updated_at = NOW()`,
+            [
+              'main',
+              this.data.settings.couple_names,
+              this.data.settings.site_title,
+              this.data.settings.meta_description,
+              this.data.settings.hero_title,
+              this.data.settings.hero_subtitle,
+              this.data.settings.counter_start_date,
+              this.data.settings.counter_enabled,
+              JSON.stringify(this.data.settings)
+            ]
+          );
+        } catch (relErr: any) {
+          console.warn('[Supabase PG] Aviso sincronizando tabela relacional:', relErr.message);
+        }
+
+        this.supabaseConnected = true;
+        this.lastSyncTime = new Date().toISOString();
+        this.syncError = null;
+        return true;
+      } finally {
+        client.release();
+      }
+    } catch (err: any) {
+      this.supabaseConnected = false;
+      this.syncError = err.message;
+      console.error('[Supabase PG Sync To Failed]:', err.message);
+      return false;
+    }
   }
 
   public saveData(data?: DatabaseSchema) {
     if (data) {
       this.data = data;
     }
-    try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
-    } catch (err) {
-      console.error("Failed to write to database file:", err);
+    this.saveLocalCache(this.data);
+    if (this.pool) {
+      this.syncToSupabase().catch((err) => {
+        console.error('[Supabase PG Async Save Failed]:', err.message);
+      });
     }
+  }
+
+  public getSupabaseStatus() {
+    return {
+      configured: !!(process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || process.env.NEXT_PUBLIC_SUPABASE_URL),
+      connected: this.supabaseConnected,
+      host: process.env.POSTGRES_HOST || 'db.wevebkpkwsocozcqrixt.supabase.co',
+      database: process.env.POSTGRES_DATABASE || 'postgres',
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wevebkpkwsocozcqrixt.supabase.co',
+      lastSync: this.lastSyncTime,
+      error: this.syncError
+    };
   }
 
   public getPublicData(): PublicSiteData {

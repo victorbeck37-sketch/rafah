@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -509,6 +510,35 @@ app.get('/api/admin/export-php', requireAdminAuth, (_req, res) => {
     });
   } catch (err: any) {
     res.status(500).json({ error: 'Erro ao gerar pacote PHP: ' + err.message });
+  }
+});
+
+// 16b. Supabase PostgreSQL Integration & Sync
+app.get('/api/admin/supabase-status', requireAdminAuth, (_req, res) => {
+  const status = db.getSupabaseStatus();
+  res.json(status);
+});
+
+app.post('/api/admin/supabase-sync', requireAdminAuth, async (req, res) => {
+  const { direction } = req.body; // 'from_cloud' or 'to_cloud'
+  try {
+    if (direction === 'from_cloud') {
+      const ok = await db.syncFromSupabase();
+      if (!ok) {
+        return res.status(500).json({ error: 'Falha ao sincronizar a partir do Supabase.' });
+      }
+      db.logAudit('Sincronização manual a partir do Supabase', 'Dados baixados do Supabase PostgreSQL.');
+      return res.json({ success: true, message: 'Dados sincronizados a partir do Supabase com sucesso!' });
+    } else {
+      const ok = await db.syncToSupabase();
+      if (!ok) {
+        return res.status(500).json({ error: 'Falha ao enviar dados para o Supabase.' });
+      }
+      db.logAudit('Sincronização manual para o Supabase', 'Dados enviados para o Supabase PostgreSQL.');
+      return res.json({ success: true, message: 'Dados enviados para o Supabase PostgreSQL com sucesso!' });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: 'Erro de sincronização: ' + err.message });
   }
 });
 

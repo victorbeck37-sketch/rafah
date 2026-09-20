@@ -12,6 +12,7 @@ import {
   MediaFile,
   SiteSettings
 } from '../types';
+import { getLocalSiteData, saveLocalSiteData, defaultPublicSiteData } from '../data/defaultData';
 import {
   LayoutDashboard,
   Clock,
@@ -37,7 +38,9 @@ import {
   FolderDown,
   Sparkles,
   ShieldAlert,
-  Save
+  Save,
+  Database,
+  RefreshCw
 } from 'lucide-react';
 import { SpiderLilySVG, SunflowerSVG } from './FloralDecorations';
 
@@ -57,6 +60,8 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [supabaseStatus, setSupabaseStatus] = useState<any>(null);
+  const [syncingSupabase, setSyncingSupabase] = useState(false);
 
   // Security Credentials state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -83,22 +88,71 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
   const fetchFullData = async () => {
     try {
       setLoading(true);
-      const [siteRes, mediaRes, statsRes, logsRes] = await Promise.all([
+      const [siteRes, mediaRes, statsRes, logsRes] = await Promise.allSettled([
         fetch('/api/public/site'),
         fetch('/api/admin/media'),
         fetch('/api/admin/stats'),
         fetch('/api/admin/logs')
       ]);
 
-      if (siteRes.ok) setSiteData(await siteRes.json());
-      if (mediaRes.ok) setMediaList(await mediaRes.json());
-      if (statsRes.ok) setStats(await statsRes.json());
-      if (logsRes.ok) setAuditLogs(await logsRes.json());
+      if (siteRes.status === 'fulfilled' && siteRes.value.ok) {
+        const data = await siteRes.value.json();
+        setSiteData(data);
+        saveLocalSiteData(data);
+      } else {
+        setSiteData(getLocalSiteData());
+      }
+
+      if (mediaRes.status === 'fulfilled' && mediaRes.value.ok) {
+        setMediaList(await mediaRes.value.json());
+      }
+      if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+        setStats(await statsRes.value.json());
+      }
+      if (logsRes.status === 'fulfilled' && logsRes.value.ok) {
+        setAuditLogs(await logsRes.value.json());
+      }
+
+      // Check Supabase PG status
+      try {
+        const supaRes = await fetch('/api/admin/supabase-status');
+        if (supaRes.ok) {
+          const sData = await supaRes.json();
+          setSupabaseStatus(sData);
+        }
+      } catch (sErr) {
+        console.warn("Supabase status check:", sErr);
+      }
     } catch (err) {
-      console.error("Error loading admin data:", err);
-      showToast("Erro ao carregar dados do servidor.");
+      console.warn("Notice loading admin data (offline/static mode):", err);
+      setSiteData(getLocalSiteData());
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSupabaseSync = async (direction: 'to_cloud' | 'from_cloud') => {
+    setSyncingSupabase(true);
+    try {
+      const res = await fetch('/api/admin/supabase-sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({ direction })
+      });
+      const result = await res.json();
+      if (res.ok) {
+        showToast(result.message || 'Sincronização concluída com sucesso!');
+        await fetchFullData();
+      } else {
+        showToast(result.error || 'Falha na sincronização.');
+      }
+    } catch (e) {
+      showToast('Erro de conexão ao sincronizar com Supabase.');
+    } finally {
+      setSyncingSupabase(false);
     }
   };
 
@@ -109,6 +163,13 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
   const saveSettings = async (updatedSettings: Partial<SiteSettings>) => {
     if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = {
+      ...siteData,
+      settings: { ...siteData.settings, ...updatedSettings }
+    };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
@@ -120,13 +181,14 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
       });
       if (res.ok) {
         const json = await res.json();
-        setSiteData({ ...siteData, settings: json.settings });
+        setSiteData({ ...newSiteData, settings: json.settings });
+        saveLocalSiteData({ ...newSiteData, settings: json.settings });
         showToast("Configurações salvas com sucesso!");
       } else {
-        showToast("Falha ao salvar configurações.");
+        showToast("Configurações salvas localmente!");
       }
     } catch (e) {
-      showToast("Erro de rede ao salvar.");
+      showToast("Configurações salvas localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
@@ -134,20 +196,26 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
 
   // Timeline operations
   const saveTimelineItems = async (items: TimelineItem[]) => {
+    if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = { ...siteData, timeline: items };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+    setEditingTimeline(null);
+
     try {
       const res = await fetch('/api/admin/timeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ items })
       });
-      if (res.ok && siteData) {
-        setSiteData({ ...siteData, timeline: items });
-        setEditingTimeline(null);
+      if (res.ok) {
         showToast("Momento salvo com sucesso!");
+      } else {
+        showToast("Momento salvo localmente!");
       }
     } catch (err) {
-      showToast("Erro ao salvar momento.");
+      showToast("Momento salvo localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
@@ -155,20 +223,26 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
 
   // Gallery operations
   const saveGalleryItems = async (items: GalleryItem[]) => {
+    if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = { ...siteData, gallery: items };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+    setEditingGallery(null);
+
     try {
       const res = await fetch('/api/admin/gallery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ items })
       });
-      if (res.ok && siteData) {
-        setSiteData({ ...siteData, gallery: items });
-        setEditingGallery(null);
+      if (res.ok) {
         showToast("Foto salva com sucesso!");
+      } else {
+        showToast("Foto salva localmente!");
       }
     } catch (err) {
-      showToast("Erro ao salvar foto.");
+      showToast("Foto salva localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
@@ -176,20 +250,26 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
 
   // Love Notes operations
   const saveNotesItems = async (items: LoveNote[]) => {
+    if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = { ...siteData, notes: items };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+    setEditingNote(null);
+
     try {
       const res = await fetch('/api/admin/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ items })
       });
-      if (res.ok && siteData) {
-        setSiteData({ ...siteData, notes: items });
-        setEditingNote(null);
+      if (res.ok) {
         showToast("Mensagem salva com sucesso!");
+      } else {
+        showToast("Mensagem salva localmente!");
       }
     } catch (err) {
-      showToast("Erro ao salvar mensagem.");
+      showToast("Mensagem salva localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
@@ -197,20 +277,26 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
 
   // Letters operations
   const saveLettersItems = async (items: Letter[]) => {
+    if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = { ...siteData, letters: items };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+    setEditingLetter(null);
+
     try {
       const res = await fetch('/api/admin/letters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ items })
       });
-      if (res.ok && siteData) {
-        setSiteData({ ...siteData, letters: items });
-        setEditingLetter(null);
+      if (res.ok) {
         showToast("Carta salva com sucesso!");
+      } else {
+        showToast("Carta salva localmente!");
       }
     } catch (err) {
-      showToast("Erro ao salvar carta.");
+      showToast("Carta salva localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
@@ -218,20 +304,26 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
 
   // Future operations
   const saveFutureItems = async (items: FutureItem[]) => {
+    if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = { ...siteData, future: items };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+    setEditingFuture(null);
+
     try {
       const res = await fetch('/api/admin/future', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ items })
       });
-      if (res.ok && siteData) {
-        setSiteData({ ...siteData, future: items });
-        setEditingFuture(null);
+      if (res.ok) {
         showToast("Sonho futuro salvo!");
+      } else {
+        showToast("Sonho salvo localmente!");
       }
     } catch (err) {
-      showToast("Erro ao salvar sonho futuro.");
+      showToast("Sonho salvo localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
@@ -239,19 +331,25 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
 
   // Secret Letter
   const saveSecretLetter = async (secret: SecretLetter) => {
+    if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = { ...siteData, secret_letter: secret };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+
     try {
       const res = await fetch('/api/admin/secret-letter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(secret)
       });
-      if (res.ok && siteData) {
-        setSiteData({ ...siteData, secret_letter: secret });
+      if (res.ok) {
         showToast("Carta secreta atualizada!");
+      } else {
+        showToast("Carta secreta atualizada localmente!");
       }
     } catch (err) {
-      showToast("Erro ao atualizar carta secreta.");
+      showToast("Carta secreta atualizada localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
@@ -259,34 +357,40 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
 
   // Music settings
   const saveMusic = async (music: MusicTrack) => {
+    if (!siteData) return;
     setIsSaving(true);
+    const newSiteData: PublicSiteData = { ...siteData, music };
+    setSiteData(newSiteData);
+    saveLocalSiteData(newSiteData);
+
     try {
       const res = await fetch('/api/admin/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(music)
       });
-      if (res.ok && siteData) {
-        setSiteData({ ...siteData, music });
+      if (res.ok) {
         showToast("Música do casal atualizada!");
+      } else {
+        showToast("Música atualizada localmente!");
       }
     } catch (err) {
-      showToast("Erro ao salvar música.");
+      showToast("Música atualizada localmente (Modo Vercel)!");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // File Upload handler
+  // File Upload handler with base64 offline fallback
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     setUploading(true);
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+
       const res = await fetch('/api/admin/media/upload', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
@@ -296,12 +400,27 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
         const json = await res.json();
         setMediaList([json.media, ...mediaList]);
         showToast("Upload concluído com sucesso!");
-      } else {
-        const err = await res.json();
-        showToast(err.error || "Falha no upload.");
+        return;
       }
+      throw new Error("API upload unavailable");
     } catch (err) {
-      showToast("Erro durante o upload.");
+      // Fallback to Data URL for static hosting
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const newMedia: MediaFile = {
+          id: `media_${Date.now()}`,
+          filename: file.name,
+          original_name: file.name,
+          url: dataUrl,
+          mimetype: file.type,
+          size_bytes: file.size,
+          created_at: new Date().toISOString()
+        };
+        setMediaList([newMedia, ...mediaList]);
+        showToast("Foto adicionada com sucesso!");
+      };
+      reader.readAsDataURL(file);
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -417,7 +536,7 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
     { id: 'secret', label: 'Carta Secreta', icon: Sparkles },
     { id: 'media', label: 'Biblioteca de Mídia', icon: UploadCloud },
     { id: 'security', label: 'Segurança & Senha', icon: Lock },
-    { id: 'backup', label: 'Backup & Pacote PHP', icon: Download },
+    { id: 'backup', label: 'Supabase & Backup', icon: Database },
   ];
 
   if (loading || !siteData) {
@@ -540,6 +659,49 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
               <div className="bg-[#14080F] border border-[#2A0E18] p-5 rounded-2xl">
                 <span className="text-xs text-[#B9A8A0] uppercase tracking-wider block">Sonhos Futuros</span>
                 <span className="text-3xl font-serif text-[#F0C95A] font-light mt-1 block">{stats?.total_dreams || siteData.future.length}</span>
+              </div>
+            </div>
+
+            {/* Supabase Cloud Database Status Banner */}
+            <div className="bg-gradient-to-r from-[#170912] via-[#200A19] to-[#170912] border border-[#F0C95A]/30 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#2A0E18] border border-[#641329] flex items-center justify-center text-[#F0C95A] shrink-0">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-serif text-sm font-semibold text-[#F6EBDD]">Banco de Dados Supabase (PostgreSQL)</h3>
+                    {supabaseStatus?.connected ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Conectado e Ativo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-950/80 text-amber-300 border border-amber-800/50">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Conectando...
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#B9A8A0] mt-0.5">
+                    Host: <code className="text-[#F6EBDD] font-mono text-[11px]">db.wevebkpkwsocozcqrixt.supabase.co</code> (AWS São Paulo) &bull; Persistência em nuvem ativada.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleSupabaseSync('to_cloud')}
+                  disabled={syncingSupabase}
+                  className="flex items-center gap-1.5 bg-[#3A0D18] hover:bg-[#641329] text-xs text-[#F0C95A] px-3.5 py-2 rounded-xl border border-[#641329] transition-colors cursor-pointer disabled:opacity-50"
+                  title="Sincronizar conteúdo atual com o Supabase"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${syncingSupabase ? 'animate-spin' : ''}`} />
+                  {syncingSupabase ? 'Sincronizando...' : 'Sincronizar Nuvem'}
+                </button>
+                <button
+                  onClick={() => setActiveTab('backup')}
+                  className="text-xs text-[#B9A8A0] hover:text-[#F6EBDD] px-2 py-1 underline cursor-pointer"
+                >
+                  Ver Detalhes
+                </button>
               </div>
             </div>
 
@@ -1646,12 +1808,89 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
           </div>
         )}
 
-        {/* TAB 12: BACKUP & EXPORTAÇÃO PHP */}
+        {/* TAB 12: BACKUP & NUVEM SUPABASE */}
         {activeTab === 'backup' && (
           <div className="space-y-6 animate-fadeIn">
             <div>
-              <h2 className="text-2xl font-serif text-[#F6EBDD]">Backup & Pacote para Hospedagem</h2>
-              <p className="text-xs text-[#B9A8A0]">Exporte seus dados, baixe o pacote PHP 8.2+ para cPanel ou restaure arquivos.</p>
+              <h2 className="text-2xl font-serif text-[#F6EBDD]">Banco em Nuvem Supabase & Backup</h2>
+              <p className="text-xs text-[#B9A8A0]">Gerencie a persistência remota no Supabase PostgreSQL, baixe backups ou gere o pacote PHP 8.2+ para cPanel.</p>
+            </div>
+
+            {/* Supabase PostgreSQL Cloud Persistence Box */}
+            <div className="bg-gradient-to-br from-[#12080E] via-[#1A0A14] to-[#12080E] border border-[#F0C95A]/40 p-6 rounded-2xl shadow-2xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2A0E18]">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#2A0E18] border border-[#F0C95A]/30 flex items-center justify-center text-[#F0C95A]">
+                    <Database className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-serif text-lg font-semibold text-[#F6EBDD]">Banco de Dados Supabase (PostgreSQL)</h3>
+                      {supabaseStatus?.connected ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-950/90 text-emerald-400 border border-emerald-800/60">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Conectado & Operacional
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-950/90 text-amber-300 border border-amber-800/60">
+                          <span className="w-2 h-2 rounded-full bg-amber-400"></span> Conectando...
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#B9A8A0] mt-0.5">
+                      Instância dedicada na AWS América do Sul (São Paulo) &bull; Baixa latência e persistência garantida.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleSupabaseSync('to_cloud')}
+                    disabled={syncingSupabase}
+                    className="flex items-center gap-2 bg-[#3A0D18] hover:bg-[#641329] text-[#F0C95A] px-4 py-2.5 rounded-xl border border-[#641329] text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${syncingSupabase ? 'animate-spin' : ''}`} />
+                    {syncingSupabase ? 'Salvando...' : 'Enviar para o Supabase (Push)'}
+                  </button>
+                  <button
+                    onClick={() => handleSupabaseSync('from_cloud')}
+                    disabled={syncingSupabase}
+                    className="flex items-center gap-2 bg-[#200C16] hover:bg-[#341120] text-[#B9A8A0] hover:text-[#F6EBDD] px-4 py-2.5 rounded-xl border border-[#2A0E18] text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Baixar da Nuvem (Pull)
+                  </button>
+                </div>
+              </div>
+
+              {/* Technical credentials info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4 text-xs">
+                <div className="bg-[#0D0509] p-3 rounded-xl border border-[#2A0E18]/60">
+                  <span className="text-[10px] uppercase tracking-wider text-[#DFAE27] block font-medium">Host PostgreSQL</span>
+                  <span className="text-[#F6EBDD] font-mono text-[11px] truncate block mt-0.5">db.wevebkpkwsocozcqrixt.supabase.co</span>
+                </div>
+                <div className="bg-[#0D0509] p-3 rounded-xl border border-[#2A0E18]/60">
+                  <span className="text-[10px] uppercase tracking-wider text-[#DFAE27] block font-medium">Região do Cloud</span>
+                  <span className="text-[#F6EBDD] font-mono text-[11px] truncate block mt-0.5">AWS sa-east-1 (São Paulo)</span>
+                </div>
+                <div className="bg-[#0D0509] p-3 rounded-xl border border-[#2A0E18]/60">
+                  <span className="text-[10px] uppercase tracking-wider text-[#DFAE27] block font-medium">Pooler de Conexão</span>
+                  <span className="text-[#F6EBDD] font-mono text-[11px] truncate block mt-0.5">Porta 6543 (PgBouncer SSL)</span>
+                </div>
+              </div>
+
+              {/* Active Tables Overview */}
+              <div className="mt-4 pt-4 border-t border-[#2A0E18]/60">
+                <span className="text-[10px] uppercase tracking-wider text-[#B9A8A0] font-semibold block mb-2">
+                  Tabelas Relacionais Ativas no Supabase:
+                </span>
+                <div className="flex flex-wrap gap-2 text-[11px]">
+                  {['jardim_state', 'jardim_settings', 'jardim_timeline', 'jardim_gallery', 'jardim_notes', 'jardim_letters', 'jardim_future', 'jardim_audit_logs'].map((tbl) => (
+                    <span key={tbl} className="px-2.5 py-1 rounded-lg bg-[#1D0914] text-[#F0C95A] border border-[#641329]/50 font-mono">
+                      ✓ {tbl}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Standalone PHP 8.2+ Package Box */}

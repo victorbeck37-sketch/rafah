@@ -414,10 +414,13 @@ class Database {
       this.pool = new pg.Pool({
         connectionString: cleanUrl,
         ssl: { rejectUnauthorized: false },
+        // Force IPv4: Vercel serverless has no IPv6 route, and Supabase hosts
+        // resolve to IPv6 first, causing connection timeouts there.
+        family: 4,
         max: 5,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 10000
-      });
+      } as pg.PoolConfig);
 
       this.pool.on('error', (err) => {
         console.error('[Supabase PG Pool Error]:', err.message);

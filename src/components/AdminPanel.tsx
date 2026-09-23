@@ -99,7 +99,9 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
       if (siteRes.status === 'fulfilled' && siteRes.value.ok) {
         const data = await siteRes.value.json();
         setSiteData(data);
-        saveLocalSiteData(data);
+        // NOTE: do NOT overwrite the local draft (localStorage) with cloud data
+        // here. The local draft is the offline fallback and may contain newer
+        // unsaved edits; clobbering it on every load made drafts unrecoverable.
       } else {
         setSiteData(getLocalSiteData());
       }

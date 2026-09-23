@@ -26,6 +26,21 @@ app.use(async (_req, _res, next) => {
   next();
 });
 
+// Admin requests re-sync from the cloud BEFORE handling. Without this, two
+// edits landing on different serverless instances (or on a warm instance that
+// synced before the other edit) would overwrite each other — only the last
+// save would survive. Re-syncing first guarantees every save starts from
+// the freshest cloud state, so concurrent edits to different sections
+// always coexist.
+app.use(async (req, _res, next) => {
+  if (req.path.startsWith('/api/admin')) {
+    try {
+      await db.syncFromSupabase();
+    } catch { /* proceed with in-memory data */ }
+  }
+  next();
+});
+
 // Uploads directory (serverless-safe: use /tmp on Vercel, since the filesystem is read-only)
 const IS_SERVERLESS = !!process.env.VERCEL;
 const UPLOADS_DIR = IS_SERVERLESS ? '/tmp/uploads' : path.join(process.cwd(), 'uploads');

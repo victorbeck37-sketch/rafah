@@ -40,7 +40,8 @@ import {
   ShieldAlert,
   Save,
   Database,
-  RefreshCw
+  RefreshCw,
+  ImagePlus
 } from 'lucide-react';
 import { SpiderLilySVG, SunflowerSVG } from './FloralDecorations';
 
@@ -380,6 +381,71 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
       setIsSaving(false);
     }
   };
+
+  // Uploads an image via the API and returns the permanent URL.
+  // Used by the Timeline/Gallery editors so users never paste temporary
+  // blob: URLs (e.g. from WhatsApp Web) that die with the browser session.
+  const uploadImageForField = async (file: File, onUploaded: (url: string) => void) => {
+    if (!file.type.startsWith('image/')) {
+      showToast('Envie um arquivo de imagem (JPG, PNG, WebP).');
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/admin/media/upload', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': csrfToken },
+        body: formData
+      });
+      if (res.ok) {
+        const json = await res.json();
+        onUploaded(json.media.url);
+        setMediaList([json.media, ...mediaList]);
+        showToast('Foto enviada e salva na nuvem! ✓');
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Falha no upload.' }));
+        showToast(err.error || 'Falha no upload da foto.');
+      }
+    } catch {
+      showToast('Erro de conexão ao enviar a foto.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const ImageUrlField = ({ value, onChange, label }: { value: string; onChange: (url: string) => void; label: string }) => (
+    <div>
+      <label className="block text-xs text-[#B9A8A0] mb-1">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 bg-[#090708] border border-[#2A0E18] rounded-lg text-sm text-[#F6EBDD]"
+      />
+      {value.startsWith('blob:') && (
+        <p className="text-[11px] text-red-400 mt-1">
+          ⚠️ Este link é temporário do navegador e vai quebrar! Envie o arquivo da foto abaixo.
+        </p>
+      )}
+      <label className="inline-flex items-center gap-1.5 mt-2 text-xs text-[#F0C95A] cursor-pointer hover:text-[#F6EBDD]">
+        <ImagePlus className="w-3.5 h-3.5" />
+        {uploading ? 'Enviando...' : 'Enviar foto do dispositivo'}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          disabled={uploading}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadImageForField(f, onChange);
+            e.target.value = '';
+          }}
+        />
+      </label>
+    </div>
+  );
 
   // File Upload handler with base64 offline fallback
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -971,15 +1037,11 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
                       className="w-full px-3 py-2 bg-[#090708] border border-[#2A0E18] rounded-lg text-sm text-[#F6EBDD]"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs text-[#B9A8A0] mb-1">URL da Foto</label>
-                    <input
-                      type="text"
-                      value={editingTimeline.image_url || ''}
-                      onChange={(e) => setEditingTimeline({ ...editingTimeline, image_url: e.target.value })}
-                      className="w-full px-3 py-2 bg-[#090708] border border-[#2A0E18] rounded-lg text-sm text-[#F6EBDD]"
-                    />
-                  </div>
+                  <ImageUrlField
+                    label="URL da Foto"
+                    value={editingTimeline.image_url || ''}
+                    onChange={(url) => setEditingTimeline({ ...editingTimeline, image_url: url })}
+                  />
                   <div className="flex items-center gap-4">
                     <label className="flex items-center gap-2 text-xs text-[#F6EBDD] cursor-pointer">
                       <input
@@ -1100,15 +1162,11 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
                       className="w-full px-3 py-2 bg-[#090708] border border-[#2A0E18] rounded-lg text-sm text-[#F6EBDD]"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs text-[#B9A8A0] mb-1">URL da Imagem</label>
-                    <input
-                      type="text"
-                      value={editingGallery.image_url}
-                      onChange={(e) => setEditingGallery({ ...editingGallery, image_url: e.target.value })}
-                      className="w-full px-3 py-2 bg-[#090708] border border-[#2A0E18] rounded-lg text-sm text-[#F6EBDD]"
-                    />
-                  </div>
+                  <ImageUrlField
+                    label="URL da Imagem"
+                    value={editingGallery.image_url}
+                    onChange={(url) => setEditingGallery({ ...editingGallery, image_url: url })}
+                  />
                   <div>
                     <label className="block text-xs text-[#B9A8A0] mb-1">Proporção Visual (Editorial)</label>
                     <select

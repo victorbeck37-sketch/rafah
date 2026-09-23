@@ -311,6 +311,12 @@
   "login_attempts": [],
   "audit_logs": [
     {
+      "id": "log_1790190451149_36xc",
+      "action": "Login realizado com sucesso",
+      "timestamp": "2026-09-23T19:07:31.149Z",
+      "details": "Usuário admin logado via IP 127.0.0.1"
+    },
+    {
       "id": "log_1789930010774_kjsy",
       "action": "Login realizado com sucesso",
       "details": "Usuário admin logado via IP 127.0.0.1",

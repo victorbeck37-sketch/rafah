@@ -413,8 +413,9 @@ export function AdminPanel({ csrfToken, adminUser, onLogout, onViewPublicSite }:
           filename: file.name,
           original_name: file.name,
           url: dataUrl,
-          mimetype: file.type,
-          size_bytes: file.size,
+          mime: file.type,
+          size: file.size,
+          alt: file.name,
           created_at: new Date().toISOString()
         };
         setMediaList([newMedia, ...mediaList]);

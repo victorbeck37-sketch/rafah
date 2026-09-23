@@ -466,7 +466,11 @@ class Database {
     try {
       fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
     } catch (err) {
-      console.error("Failed to write to local database file:", err);
+      // Read-only filesystem (serverless): fall back to /tmp so the instance can still cache
+      try {
+        const tmp = path.join('/tmp', 'jardim-db.json');
+        fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
+      } catch { /* ignore */ }
     }
   }
 

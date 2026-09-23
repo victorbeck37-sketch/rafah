@@ -419,6 +419,14 @@ app.get('/api/admin/notes', requireAdminAuth, (_req, res) => {
 app.post('/api/admin/notes', requireAdminAuth, (req, res) => {
   const { items } = req.body;
   if (!Array.isArray(items)) {
+    return res.status(400).json({ error: 'Lista de pequenos detalhes inválida.' });
+  }
+  const raw = db.getRawData();
+  raw.notes = items;
+  db.saveData(raw);
+  db.logAudit('Pequenas Coisas Que Amo atualizadas');
+  res.json({ success: true, items: raw.notes });
+});
 
 // 9. Admin Letters CRUD
 app.get('/api/admin/letters', requireAdminAuth, (_req, res) => {
@@ -497,14 +505,6 @@ app.post('/api/admin/easter-eggs', requireAdminAuth, (req, res) => {
   res.json({ success: true, items: raw.easter_eggs });
 });
 
-    return res.status(400).json({ error: 'Lista de pequenos detalhes inválida.' });
-  }
-  const raw = db.getRawData();
-  raw.notes = items;
-  db.saveData(raw);
-  db.logAudit('Pequenas Coisas Que Amo atualizadas');
-  res.json({ success: true, items: raw.notes });
-});
 
 
 // 14. Media Library & Upload

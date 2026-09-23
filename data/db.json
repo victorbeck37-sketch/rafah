@@ -5,7 +5,7 @@
     "password_hash": "$2b$10$0NzQN4wIiIcKmKUiaVVBT.64iAJwfCoI1em7uoQX.m95H6iZ1Gfra"
   },
   "settings": {
-    "hero_cta": "Começar nossa história",
+    "hero_cta": "CLica aqui momozi",
     "color_red": "#A9162F",
     "color_gold": "#F0C95A",
     "hero_image": "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?q=80&w=1600&auto=format&fit=crop",
@@ -15,7 +15,7 @@
     "footer_text": "Obrigado por ser o meu sol da tarde e a minha paz na noite.",
     "notes_title": "Pequenas Coisas Que Amo Em Você",
     "story_title": "Nossa História",
-    "couple_names": "[SEU NOME] & [NOME DELA]",
+    "couple_names": "Victor e Momozi",
     "footer_title": "Essa história ainda está só começando.",
     "future_title": "Tudo Que Ainda Vamos Viver",
     "color_bg_deep": "#090708",
@@ -38,64 +38,64 @@
     "letters_enabled": true,
     "counter_subtitle": "E cada segundo continua sendo a melhor escolha da minha vida",
     "enable_particles": true,
-    "footer_signature": "[SEU NOME] ♥ [NOME DELA]",
+    "footer_signature": "Victor♥ Rafaeli",
     "gallery_subtitle": "Fragmentos de tempo guardados com o carinho que merecem",
     "letters_subtitle": "Abra quando o seu coração pedir um abraço em forma de palavras",
     "meta_description": "Para a pessoa que fez meu mundo florescer. Um jardim onde nossa história de amor é contada em cada detalhe.",
     "cinematic_enabled": true,
     "cinematic_title_1": "Você chegou até aqui.",
     "cinematic_title_2": "E eu escolheria você de novo. Todos os dias.",
-    "counter_start_date": "2023-06-12T19:30:00"
+    "counter_start_date": "2025-10-21T00:00"
   },
   "timeline": [
     {
       "id": "tl_1",
       "tag": "Primeiro Olhar",
-      "date": "O Início",
+      "date": "Quando eu me apaixonei por você",
       "order": 1,
       "title": "Quando tudo começou",
-      "image_url": "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=800&auto=format&fit=crop",
-      "description": "Um olhar despretensioso que mudou a rota de tudo. Quem diria que uma conversa comum seria o começo do meu lugar favorito no mundo?",
+      "image_url": "blob:https://web.whatsapp.com/a893b1e7-7e19-4f9c-9c96-3622e14dbb2a",
+      "description": "Eu percebi que você era a mulher da minha vida quando eu vi que voce era boba, extrovertida, complicada, sentimental, mandona, meio preguiçosa mas nao deixa de fazer coisas para me agradar, e notando tudo isso que eu vi que você é perfeita pra mim ",
       "is_highlight": true
     },
     {
       "id": "tl_2",
       "tag": "Café & Conversa",
-      "date": "Primeiro Encontro",
+      "date": "Quando eu vi esse seu corpinho",
       "order": 2,
-      "title": "O nervosismo e o sorriso que acalmou tudo",
-      "image_url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop",
-      "description": "As horas passaram como se fossem minutos. A sensação doce de já te conhecer há vidas inteiras.",
+      "title": "O corpo que me encantou (uii)",
+      "image_url": "blob:https://web.whatsapp.com/a227dd67-17b0-49d7-be65-65c48544dd15",
+      "description": "Sabe alem de tudo você é linda, tem um belo corpo, delicado, com quadris avantajados rs, com uma proporção bonita que so de olhar ja me tras muito calor e muita felicidade, pois você é tudo que eu poderia desejar",
       "is_highlight": false
     },
     {
       "id": "tl_3",
       "tag": "Conexão",
-      "date": "A Certeza",
+      "date": "O olhar que me faz ficar caidinho",
       "order": 3,
-      "title": "O primeiro momento inesquecível",
-      "image_url": "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=800&auto=format&fit=crop",
-      "description": "Aquele abraço demorado no final da tarde, com o vento suave e o silêncio confortável que só existe onde há paz.",
+      "title": "Seus Olhos",
+      "image_url": "blob:https://web.whatsapp.com/fff6c79b-bde8-439f-9d87-4c3c1d207131",
+      "description": "Sabe alem de voce ter  olhos grandes, eu consigo ver  quando você está apaixonada por mim sabe, por que os seus olhos repelem os seus sentimentos, assim como voce ta tristinha e seus olhos brilham e voce faz um bico, quando voce ta apaixonada eu vejo voce me admirar, e isso me faz amado ",
       "is_highlight": true
     },
     {
       "id": "tl_4",
       "tag": "Força",
-      "date": "Superação",
+      "date": "Nossas Brigas",
       "order": 4,
-      "title": "Uma fase difícil que vencemos juntos",
-      "image_url": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=800&auto=format&fit=crop",
-      "description": "A vida nem sempre é feita de dias calmos, mas descobrir que segurar a sua mão transforma qualquer tempestade em aprendizado foi libertador.",
+      "title": "Somos complicados",
+      "image_url": "blob:https://web.whatsapp.com/adae2a44-0aca-45b5-885f-5215a16ac0d7",
+      "description": "Eu sei que já brigamos muito nessa vida, porém em todas as nossas brigas eu terminei com uma decisão, você, sabe eu gosto muito da sua companhia e não são momentos que vão tirar o amor da minha vida de mim, por mais de tudo isso, eu me apaixono por você todos os dias  ",
       "is_highlight": false
     },
     {
       "id": "tl_5",
       "tag": "Eternidade",
-      "date": "Hoje",
+      "date": "Você",
       "order": 5,
-      "title": "O presente: cultivar o nosso amor",
-      "image_url": "https://images.unsplash.com/photo-1474552226712-ac0f0961a954?q=80&w=800&auto=format&fit=crop",
-      "description": "Olhar para trás e sentir orgulho. Olhar para você e sentir gratidão infinita. O hoje é o nosso melhor jardim.",
+      "title": "Você por inteira",
+      "image_url": "blob:https://web.whatsapp.com/09de0008-257f-467c-8380-32bfb8b8daff",
+      "description": "Tudo que eu enxergo quando olho pra você é a menina incrível que você é porque alem de bonita e charmosa rs, você tem caracteristicas unicas que me fazem feliz quando eu  passo meu tempo contigo, e todos os dias eu quero passar o resto dos meus dias com você!",
       "is_highlight": true
     }
   ],
@@ -105,50 +105,50 @@
       "alt": "Casal ao entardecer",
       "date": "Pôr do sol especial",
       "order": 1,
-      "title": "Luz de Entardecer",
+      "title": "Quando eu te conheci",
       "aspect": "tall",
-      "caption": "Aquele pôr do sol em que o mundo inteiro pareceu dourado para nós.",
-      "image_url": "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=1200&auto=format&fit=crop"
+      "caption": "Você é e foi a pessoa que eu mais me apaixonei durante todo esse tempo, e todos os dias eu me aprofundo mais em sua beleza",
+      "image_url": "blob:https://web.whatsapp.com/b30f6eaf-f0f2-4af0-bf8f-82446c484db1"
     },
     {
       "id": "gal_2",
       "alt": "Jardim com flores e sol dourado",
       "date": "Primavera",
       "order": 2,
-      "title": "O Jardim Secreto",
+      "title": "A sua beleza",
       "aspect": "wide",
-      "caption": "Entre lírios e girassóis, onde o silêncio fala mais que mil palavras.",
-      "image_url": "https://images.unsplash.com/photo-1508672019048-805b876b67e2?q=80&w=1200&auto=format&fit=crop"
+      "caption": "Eu amo como você é linda seu rosto delicado, sua pele lisa, seus grandes olhos que me admiram, e a sua boca que espero um dia tocar",
+      "image_url": "blob:https://web.whatsapp.com/6da63687-238b-4877-bf7f-0a887c07fdea"
     },
     {
       "id": "gal_3",
       "alt": "Sorriso sincero e delicado",
       "date": "Um dia comum",
       "order": 3,
-      "title": "Seu Sorriso Espontâneo",
+      "title": "Minha bebezinha",
       "aspect": "square",
-      "caption": "A foto que tirei sem você perceber, mas que guarda tudo o que você é.",
-      "image_url": "https://images.unsplash.com/photo-1494774157365-9e04c6720e47?q=80&w=1000&auto=format&fit=crop"
+      "caption": "Desde sempre eu te amo como uma parceira e alguem que tenho que proteger e cuidar de todo mal do mundo, te amo pra sempre minha bebezinha ",
+      "image_url": "blob:https://web.whatsapp.com/bea6af75-99d1-4350-a019-0e8a6325ff3c"
     },
     {
       "id": "gal_4",
       "alt": "Mãos entrelaçadas",
       "date": "Caminhada de outono",
       "order": 4,
-      "title": "Mãos Dadas",
+      "title": "Sua esquisitisse",
       "aspect": "tall",
-      "caption": "Não importa o destino, desde que o caminho seja ao seu lado.",
-      "image_url": "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200&auto=format&fit=crop"
+      "caption": "Uma caracteristica sua que eu amo é o quanto vc é estranha, eu amo muito isso, porque isso faz voce ser mais interessante, e cada dia que eu passo com você é uma nova memória incrível que eu tenho",
+      "image_url": "blob:https://web.whatsapp.com/4debb140-b87d-42b6-af5c-3c99c844c44a"
     },
     {
       "id": "gal_5",
       "alt": "Luzes quentes e bokeh romântico",
       "date": "Nossa noite favorita",
       "order": 5,
-      "title": "Noite Sob as Luzes",
+      "title": "Atualmente",
       "aspect": "wide",
-      "caption": "A noite caiu, mas a sua presença iluminou cada canto.",
-      "image_url": "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1200&auto=format&fit=crop"
+      "caption": "Hoje vejo que você é a pessoa que eu mais me aproximei durante tanto tempo, ja tive relações mais duradouras, mas nenhuma foi tão profunda como a sua ",
+      "image_url": "blob:https://web.whatsapp.com/41f1a224-0108-401b-ad05-97e0e417752c"
     }
   ],
   "notes": [
@@ -156,16 +156,16 @@
       "id": "note_1",
       "icon": "sparkles",
       "order": 1,
-      "title": "Seu jeito de falar comigo",
-      "content": "Mesmo nos dias mais caóticos, o tom da sua voz traz uma serenidade que desfaz qualquer tempestade dentro de mim.",
+      "title": "O jeito que você fala comigo",
+      "content": "Eu amo o jeito que voce fala comigo, pq mesmo quando meu dia ta uma bagunça  ou eu não estou muito bem, só de conversar com voce eu já consigo me sentir muuito melhor, parece que só ouvir voce falando comigo consegue deixar tudo mais calmo e fazer eu esquecer um pouco das coisas que estão me deixando mal, eu gosto muito de ouvir sua voz e principalmente do jeito que você fala comigo, porque é uma das coisas que fazem eu me sentir bem mesmo quando meu dia não está sendo dos melhores, te amo",
       "click_to_reveal": false
     },
     {
       "id": "note_2",
       "icon": "sun",
       "order": 2,
-      "title": "Como você transforma o comum",
-      "content": "Um simples café no fim de tarde ou uma caminhada de dez minutos viram a melhor parte da minha semana ao seu lado.",
+      "title": "Como voce transforma o comum",
+      "content": "Eu amo como até as coisas mais simples ficam muito melhores quando estou com voce, porque um simples café no fim da tarde  ou um cafe de uns minutos com voce conseguem virar uma das melhores partes do meu dia, parece que nao  importa muito o que a gente está fazendo quando eu to  com voce, eu sempre vou estar feliz só por estar do seu lado e poder passar um tempo com voce, te amo muito",
       "click_to_reveal": false
     },
     {
@@ -173,23 +173,23 @@
       "icon": "heart",
       "order": 3,
       "title": "Seus olhos quando sorri",
-      "content": "Eles quase fecham e ganham um brilho tão puro que eu poderia passar a eternidade apenas admirando.",
+      "content": "Eu amo quando voce sorri, principalmente o jeito que seus olhos ficam quando voce começa a sorrir, parece que eles ficam pequenininhos, mesmo sendo grandoes e eu acho isso muito lindo, eu poderia ficar olhando pra voce por muito tempo só vendo voce sorrir, porque é uma das coisas que eu mais gosto em voce e que sempre consegue me deixar muito feliz, te amo muito",
       "click_to_reveal": true
     },
     {
       "id": "note_4",
       "icon": "shield",
       "order": 4,
-      "title": "O seu abraço de porto seguro",
-      "content": "Aquele encaixe perfeito onde parece que o mundo para lá fora e nada de ruim pode nos alcançar.",
+      "title": "o Jeito que vc faz pra mexer comigo",
+      "content": "Eu amo o jeito que voce consegue me fazer sentir bem mesmo quando a gente ta longe, porque as vezes so de conversar com voce eu já consigo esquecer um pouco das coisas ruins e ficar muito mais tranquilo, parece que quando eu to falando com voce nada mais importa por um tempo e eu só quero continuar ali conversando com voce, porque voce consegue fazer eu me sentir muito bem mesmo estando longe, te amo muito.\n",
       "click_to_reveal": false
     },
     {
       "id": "note_5",
       "icon": "feather",
       "order": 5,
-      "title": "Os pequenos detalhes imperceptíveis",
-      "content": "O jeito que você mexe no cabelo quando pensa, como lembra das coisas que eu gosto e como cuida de mim sem alarde.",
+      "title": "Os pequenos detalhes que amo em voce",
+      "content": "Eu amo os pequenos detalhes que voce faz sem nem perceber, porque são essas coisinhas que fazem eu gostar ainda mais de voce, o jeito que voce mexe no cabelo quando está pensando, quando voce lembra de alguma coisa que eu gosto ou até quando voce faz alguma coisa por mim sem nem precisar falar nada, eu gosto muito de perceber essas coisas em voce porque mesmo sendo pequenas fazem muita diferença pra mim e me fazem lembrar do quanto eu amo voce, te amo muitoioioi\n",
       "click_to_reveal": true
     }
   ],
@@ -311,10 +311,223 @@
   "login_attempts": [],
   "audit_logs": [
     {
+      "id": "log_1790200084636_ynta",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 127.0.0.1",
+      "timestamp": "2026-09-23T21:48:04.636Z"
+    },
+    {
+      "id": "log_1790200041741_80pi",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T21:47:21.741Z"
+    },
+    {
+      "id": "log_1790200002002_8o6s",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T21:46:42.002Z"
+    },
+    {
+      "id": "log_1790199977805_psou",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T21:46:17.805Z"
+    },
+    {
+      "id": "log_1790199968088_hq8e",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T21:46:08.088Z"
+    },
+    {
+      "id": "log_1790199154539_j0x9",
+      "action": "Sincronização manual para o Supabase",
+      "details": "Dados enviados para o Supabase PostgreSQL.",
+      "timestamp": "2026-09-23T21:32:34.539Z"
+    },
+    {
+      "id": "log_1790198703736_zboe",
+      "action": "Pequenas Coisas Que Amo atualizadas",
+      "timestamp": "2026-09-23T21:25:03.736Z"
+    },
+    {
+      "id": "log_1790198571812_cenq",
+      "action": "Pequenas Coisas Que Amo atualizadas",
+      "timestamp": "2026-09-23T21:22:51.812Z"
+    },
+    {
+      "id": "log_1790198529194_r8sh",
+      "action": "Pequenas Coisas Que Amo atualizadas",
+      "timestamp": "2026-09-23T21:22:09.194Z"
+    },
+    {
+      "id": "log_1790198329087_h0r1",
+      "action": "Pequenas Coisas Que Amo atualizadas",
+      "timestamp": "2026-09-23T21:18:49.087Z"
+    },
+    {
+      "id": "log_1790198235991_cs63",
+      "action": "Pequenas Coisas Que Amo atualizadas",
+      "timestamp": "2026-09-23T21:17:15.991Z"
+    },
+    {
+      "id": "log_1790198149247_ijgk",
+      "action": "Pequenas Coisas Que Amo atualizadas",
+      "timestamp": "2026-09-23T21:15:49.247Z"
+    },
+    {
+      "id": "log_1790198130099_geyd",
+      "action": "Pequenas Coisas Que Amo atualizadas",
+      "timestamp": "2026-09-23T21:15:30.099Z"
+    },
+    {
+      "id": "log_1790197041911_xjik",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T20:57:21.911Z"
+    },
+    {
+      "id": "log_1790196676910_29xh",
+      "action": "Timeline atualizada",
+      "details": "5 momentos salvos.",
+      "timestamp": "2026-09-23T20:51:16.910Z"
+    },
+    {
+      "id": "log_1790196561127_yg3p",
+      "action": "Timeline atualizada",
+      "details": "5 momentos salvos.",
+      "timestamp": "2026-09-23T20:49:21.127Z"
+    },
+    {
+      "id": "log_1790196438559_7arq",
+      "action": "Timeline atualizada",
+      "details": "5 momentos salvos.",
+      "timestamp": "2026-09-23T20:47:18.559Z"
+    },
+    {
+      "id": "log_1790196268550_lr9x",
+      "action": "Timeline atualizada",
+      "details": "5 momentos salvos.",
+      "timestamp": "2026-09-23T20:44:28.550Z"
+    },
+    {
+      "id": "log_1790196154513_dk39",
+      "action": "Timeline atualizada",
+      "details": "5 momentos salvos.",
+      "timestamp": "2026-09-23T20:42:34.513Z"
+    },
+    {
+      "id": "log_1790195754616_ca8a",
+      "action": "Galeria de fotos atualizada",
+      "details": "5 fotos salvas.",
+      "timestamp": "2026-09-23T20:35:54.616Z"
+    },
+    {
+      "id": "log_1790195678957_5bs6",
+      "action": "Galeria de fotos atualizada",
+      "details": "5 fotos salvas.",
+      "timestamp": "2026-09-23T20:34:38.957Z"
+    },
+    {
+      "id": "log_1790195610533_60vt",
+      "action": "Galeria de fotos atualizada",
+      "details": "5 fotos salvas.",
+      "timestamp": "2026-09-23T20:33:30.533Z"
+    },
+    {
+      "id": "log_1790195579685_ydcs",
+      "action": "Galeria de fotos atualizada",
+      "details": "5 fotos salvas.",
+      "timestamp": "2026-09-23T20:32:59.685Z"
+    },
+    {
+      "id": "log_1790195524977_cfgl",
+      "action": "Galeria de fotos atualizada",
+      "details": "5 fotos salvas.",
+      "timestamp": "2026-09-23T20:32:04.977Z"
+    },
+    {
+      "id": "log_1790195447284_ypqi",
+      "action": "Galeria de fotos atualizada",
+      "details": "5 fotos salvas.",
+      "timestamp": "2026-09-23T20:30:47.284Z"
+    },
+    {
+      "id": "log_1790195361646_je65",
+      "action": "Galeria de fotos atualizada",
+      "details": "5 fotos salvas.",
+      "timestamp": "2026-09-23T20:29:21.646Z"
+    },
+    {
+      "id": "log_1790194002799_dy70",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T20:06:42.799Z"
+    },
+    {
+      "id": "log_1790193568796_qnqs",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T19:59:28.796Z"
+    },
+    {
+      "id": "log_1790193568286_7o3o",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T19:59:28.286Z"
+    },
+    {
+      "id": "log_1790193549714_yja7",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T19:59:09.715Z"
+    },
+    {
+      "id": "log_1790193507778_hnus",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T19:58:27.778Z"
+    },
+    {
+      "id": "log_1790193506549_wqak",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T19:58:26.549Z"
+    },
+    {
+      "id": "log_1790193308592_fxl0",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T19:55:08.592Z"
+    },
+    {
+      "id": "log_1790193274563_nkv3",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T19:54:34.563Z"
+    },
+    {
+      "id": "log_1790192967515_81ev",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T19:49:27.515Z"
+    },
+    {
+      "id": "log_1790192480352_d8jv",
+      "action": "Configurações do site atualizadas",
+      "timestamp": "2026-09-23T19:41:20.352Z"
+    },
+    {
+      "id": "log_1790192446404_jw35",
+      "action": "Sincronização manual para o Supabase",
+      "details": "Dados enviados para o Supabase PostgreSQL.",
+      "timestamp": "2026-09-23T19:40:46.404Z"
+    },
+    {
+      "id": "log_1790192293567_558z",
+      "action": "Login realizado com sucesso",
+      "details": "Usuário admin logado via IP 131.72.93.54",
+      "timestamp": "2026-09-23T19:38:13.567Z"
+    },
+    {
       "id": "log_1790190451149_36xc",
       "action": "Login realizado com sucesso",
-      "timestamp": "2026-09-23T19:07:31.149Z",
-      "details": "Usuário admin logado via IP 127.0.0.1"
+      "details": "Usuário admin logado via IP 127.0.0.1",
+      "timestamp": "2026-09-23T19:07:31.149Z"
     },
     {
       "id": "log_1789930010774_kjsy",

@@ -114,7 +114,12 @@ export default function App() {
       return (
         <AdminLogin
           csrfToken={csrfToken}
-          onLoginSuccess={(user) => setAdminUser(user)}
+          onLoginSuccess={(user, sessionCsrfToken) => {
+            setAdminUser(user);
+            if (sessionCsrfToken) {
+              setCsrfToken(sessionCsrfToken);
+            }
+          }}
           onBackToSite={navigateToPublicSite}
         />
       );

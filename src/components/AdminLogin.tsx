@@ -4,7 +4,7 @@ import { Lock, ArrowLeft, Shield, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 interface AdminLoginProps {
   csrfToken: string;
-  onLoginSuccess: (user: any) => void;
+  onLoginSuccess: (user: any, csrfToken: string) => void;
   onBackToSite: () => void;
 }
 
@@ -32,7 +32,8 @@ export function AdminLogin({ csrfToken, onLoginSuccess, onBackToSite }: AdminLog
 
       const data = await res.json();
       if (res.ok) {
-        onLoginSuccess(data.user);
+        // Propagate the session CSRF token so the panel's save requests pass validation
+        onLoginSuccess(data.user, data.csrfToken);
       } else {
         setErrorMsg(data.error || 'Credenciais inválidas. Verifique seu usuário e senha.');
       }

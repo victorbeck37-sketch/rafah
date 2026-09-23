@@ -568,24 +568,5 @@ app.get('/api/admin/logs', requireAdminAuth, (_req, res) => {
   res.json(db.getRawData().audit_logs);
 });
 
-// TEMP: DB connection diagnostic endpoint (remove after debugging)
-app.get('/api/debug-pg', async (_req, res) => {
-  const results: any = { node: process.version, vercel: process.env.VERCEL ?? null, urlSet: !!process.env.POSTGRES_URL };
-  const url = (process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || '').split('?')[0];
-  results.urlHost = url.replace(/:[^:@]+@/, ':***@');
-  try {
-    const pg = await import('pg');
-    const client = new (pg.default as any).Client({ connectionString: url, ssl: { rejectUnauthorized: false }, family: 4, connectionTimeoutMillis: 8000 } as any);
-    const t0 = Date.now();
-    await client.connect();
-    const r = await client.query('SELECT NOW() as now');
-    results.ok = true; results.ms = Date.now() - t0; results.now = r.rows[0].now;
-    await client.end();
-  } catch (err: any) {
-    results.ok = false; results.err = err.message; results.code = err.code;
-  }
-  res.json(results);
-});
-
 export default app;
 

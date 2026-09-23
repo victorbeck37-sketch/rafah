@@ -8,19 +8,16 @@ import type { PublicSiteData, SiteSettings, TimelineItem, GalleryItem, LoveNote,
 // On Vercel serverless, background promises are frozen once the response is
 // sent. `waitUntil` (from @vercel/functions) keeps the invocation alive until
 // the Supabase sync finishes. Locally it is a no-op fallback.
+import { waitUntil as vercelWaitUntil } from '@vercel/functions';
+
 export function runInBackground(p: Promise<unknown>): void {
-  import('@vercel/functions')
-    .then((mod) => {
-      const waitUntil = (mod as any).waitUntil as ((promise: Promise<unknown>) => void) | undefined;
-      if (typeof waitUntil === 'function') {
-        waitUntil(p);
-      } else {
-        p.catch((err: any) => console.error('[Background task failed]:', err?.message || err));
-      }
-    })
-    .catch(() => {
-      p.catch((err: any) => console.error('[Background task failed]:', err?.message || err));
-    });
+  try {
+    if (typeof vercelWaitUntil === 'function') {
+      vercelWaitUntil(p);
+      return;
+    }
+  } catch { /* not on Vercel */ }
+  p.catch((err: any) => console.error('[Background task failed]:', err?.message || err));
 }
 
 export interface DatabaseSchema {

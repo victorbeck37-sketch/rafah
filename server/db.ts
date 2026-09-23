@@ -5,6 +5,24 @@ import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import type { PublicSiteData, SiteSettings, TimelineItem, GalleryItem, LoveNote, Letter, SecretLetter, MusicTrack, FutureItem, EasterEgg, MediaFile } from '../src/types.js';
 
+// On Vercel serverless, background promises are frozen once the response is
+// sent. `waitUntil` (from @vercel/functions) keeps the invocation alive until
+// the Supabase sync finishes. Locally it is a no-op fallback.
+export function runInBackground(p: Promise<unknown>): void {
+  import('@vercel/functions')
+    .then((mod) => {
+      const waitUntil = (mod as any).waitUntil as ((promise: Promise<unknown>) => void) | undefined;
+      if (typeof waitUntil === 'function') {
+        waitUntil(p);
+      } else {
+        p.catch((err: any) => console.error('[Background task failed]:', err?.message || err));
+      }
+    })
+    .catch(() => {
+      p.catch((err: any) => console.error('[Background task failed]:', err?.message || err));
+    });
+}
+
 export interface DatabaseSchema {
   admin: {
     username: string;
@@ -407,10 +425,10 @@ class Database {
         this.syncError = err.message;
       });
 
-      // Background initialization
-      this.syncFromSupabase().catch((err) => {
+      // Background initialization (kept alive via waitUntil on Vercel)
+      runInBackground(this.syncFromSupabase().catch((err) => {
         console.error('[Supabase PG Init Error]:', err.message);
-      });
+      }));
     } catch (err: any) {
       console.error('[Supabase PG Setup Error]:', err.message);
       this.syncError = err.message;
@@ -595,9 +613,9 @@ class Database {
     }
     this.saveLocalCache(this.data);
     if (this.pool) {
-      this.syncToSupabase().catch((err) => {
+      runInBackground(this.syncToSupabase().catch((err) => {
         console.error('[Supabase PG Async Save Failed]:', err.message);
-      });
+      }));
     }
   }
 

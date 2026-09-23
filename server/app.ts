@@ -6,14 +6,25 @@ import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { db } from './db.js';
 
 const app = express();
 
 // Middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(cookieParser());
+
+// Ensure every request is served with up-to-date cloud data: serverless
+// instances start from local defaults and sync from Supabase in the
+// background; this middleware blocks handling until that first sync settles.
+app.use(async (_req, _res, next) => {
+  try {
+    await db.ready();
+  } catch { /* proceed with local data */ }
+  next();
+});
 
 // Uploads directory (serverless-safe: use /tmp on Vercel, since the filesystem is read-only)
 const IS_SERVERLESS = !!process.env.VERCEL;
@@ -35,27 +46,10 @@ if (!IS_SERVERLESS) {
   }
 }
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    try {
-      if (!fs.existsSync(UPLOADS_DIR)) {
-        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-      }
-      cb(null, UPLOADS_DIR);
-    } catch (err) {
-      cb(err as Error, UPLOADS_DIR);
-    }
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const safeName = crypto.randomBytes(12).toString('hex') + ext;
-    cb(null, safeName);
-  }
-});
-
+// Configure multer: keep files in memory; on Supabase they go to Storage,
+// otherwise they are written to disk (local dev).
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max
   fileFilter: (_req, file, cb) => {
     const allowedMimes = [
@@ -69,6 +63,49 @@ const upload = multer({
     }
   }
 });
+
+// ---------------- Supabase Storage (persistent uploads on serverless) ----------------
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
+const STORAGE_BUCKET = 'jardim-uploads';
+
+const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_KEY
+  ? createSupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { auth: { persistSession: false } })
+  : null;
+
+async function ensureStorageBucket(): Promise<void> {
+  try {
+    await supabaseAdmin!.storage.createBucket(STORAGE_BUCKET, { public: true });
+  } catch { /* bucket already exists or cannot be created */ }
+}
+
+async function uploadToStorage(buffer: Buffer, filename: string, mime: string): Promise<string | null> {
+  if (!supabaseAdmin) return null;
+  try {
+    await ensureStorageBucket();
+    const objectPath = `${Date.now()}-${filename}`;
+    const { error } = await supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .upload(objectPath, buffer, { contentType: mime, upsert: false });
+    if (error) throw error;
+    const { data } = supabaseAdmin.storage.from(STORAGE_BUCKET).getPublicUrl(objectPath);
+    return data.publicUrl;
+  } catch (err: any) {
+    console.error('[Supabase Storage Upload Failed]:', err.message);
+    return null;
+  }
+}
+
+async function removeFromStorage(url: string): Promise<void> {
+  if (!supabaseAdmin) return;
+  const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return;
+  const objectPath = url.substring(idx + marker.length).split('?')[0];
+  try {
+    await supabaseAdmin.storage.from(STORAGE_BUCKET).remove([objectPath]);
+  } catch { /* best effort */ }
+}
 
 // ---------------- Stateless sessions (HMAC-signed cookie) ----------------
 // Serverless environments (Vercel) cannot keep in-memory session maps,
@@ -460,16 +497,34 @@ app.get('/api/admin/media', requireAdminAuth, (_req, res) => {
   res.json(db.getRawData().media);
 });
 
-app.post('/api/admin/media/upload', requireAdminAuth, upload.single('file'), (req, res) => {
+app.post('/api/admin/media/upload', requireAdminAuth, upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
   }
 
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  const safeName = crypto.randomBytes(12).toString('hex') + ext;
+
+  // Persist to Supabase Storage (serverless-friendly). Falls back to local
+  // disk when Supabase is not configured (local dev).
+  let url = await uploadToStorage(req.file.buffer, safeName, req.file.mimetype);
+  if (!url) {
+    try {
+      if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      }
+      fs.writeFileSync(path.join(UPLOADS_DIR, safeName), req.file.buffer);
+      url = `/uploads/${safeName}`;
+    } catch (err: any) {
+      return res.status(500).json({ error: 'Falha ao salvar o arquivo: ' + err.message });
+    }
+  }
+
   const mediaItem = {
     id: 'med_' + Date.now(),
-    filename: req.file.filename,
+    filename: safeName,
     original_name: req.file.originalname,
-    url: `/uploads/${req.file.filename}`,
+    url,
     mime: req.file.mimetype,
     size: req.file.size,
     alt: req.body.alt || req.file.originalname,
@@ -484,7 +539,7 @@ app.post('/api/admin/media/upload', requireAdminAuth, upload.single('file'), (re
   res.json({ success: true, media: mediaItem });
 });
 
-app.delete('/api/admin/media/:id', requireAdminAuth, (req, res) => {
+app.delete('/api/admin/media/:id', requireAdminAuth, async (req, res) => {
   const id = req.params.id;
   const raw = db.getRawData();
   const index = raw.media.findIndex(m => m.id === id);
@@ -493,6 +548,8 @@ app.delete('/api/admin/media/:id', requireAdminAuth, (req, res) => {
   }
 
   const item = raw.media[index];
+  // Remove from Supabase Storage (cloud) and/or local disk (best effort)
+  await removeFromStorage(item.url);
   const filePath = path.join(UPLOADS_DIR, item.filename);
   if (fs.existsSync(filePath)) {
     try {

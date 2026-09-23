@@ -377,6 +377,7 @@ const defaultEasterEggs: EasterEgg[] = [
 class Database {
   private data: DatabaseSchema;
   private pool: pg.Pool | null = null;
+  private initPromise: Promise<boolean> | null = null;
   private supabaseConnected = false;
   private lastSyncTime: string | null = null;
   private syncError: string | null = null;
@@ -425,10 +426,13 @@ class Database {
         this.syncError = err.message;
       });
 
-      // Background initialization (kept alive via waitUntil on Vercel)
-      runInBackground(this.syncFromSupabase().catch((err) => {
+      // Initial cloud sync. Every request awaits this via db.ready() so cold
+      // instances always serve up-to-date cloud data (see server/app.ts).
+      this.initPromise = this.syncFromSupabase().catch((err) => {
         console.error('[Supabase PG Init Error]:', err.message);
-      }));
+        return false;
+      });
+      runInBackground(this.initPromise);
     } catch (err: any) {
       console.error('[Supabase PG Setup Error]:', err.message);
       this.syncError = err.message;
@@ -489,6 +493,17 @@ class Database {
         const tmp = path.join('/tmp', 'jardim-db.json');
         fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
       } catch { /* ignore */ }
+    }
+  }
+
+  // Waits until the initial cloud sync attempt has finished (or failed).
+  // Called before every request so serverless instances always serve
+  // up-to-date Supabase data instead of stale local defaults.
+  public async ready(): Promise<void> {
+    if (this.initPromise) {
+      try {
+        await this.initPromise;
+      } catch { /* proceed with local data */ }
     }
   }
 
